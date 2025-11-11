@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Guessing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #121213;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            border-bottom: 1px solid #3a3a3c;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 0.2rem;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .guesses-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .guesses-column {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .guesses-container {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+
+        .guess-row {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .feedback {
+            margin-left: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 14px;
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        .feedback-correct {
+            color: #538d4e;
+        }
+
+        .feedback-present {
+            color: #b59f3b;
+        }
+
+        .digit-box {
+            width: 62px;
+            height: 62px;
+            border: 2px solid #3a3a3c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-color: #121213;
+            transition: all 0.3s;
+        }
+
+        .digit-box.filled {
+            border-color: #565758;
+        }
+
+        .digit-box.active {
+            border-color: #565758;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .digit-box.correct {
+            background-color: #538d4e;
+            border-color: #538d4e;
+        }
+
+        .digit-box.present {
+            background-color: #b59f3b;
+            border-color: #b59f3b;
+        }
+
+        .digit-box.codebreaker-filled {
+            background-color: #3a3a3c;
+            border-color: #565758;
+        }
+
+        .digit-box.flip {
+            animation: flip 0.5s;
+        }
+
+        @keyframes flip {
+            0% { transform: rotateX(0); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0); }
+        }
+
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #818384;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #9a9b9c;
+        }
+
+        button:disabled {
+            background-color: #3a3a3c;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+            min-height: 30px;
+        }
+
+        .modal {
+            display: flex;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #121213;
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid #3a3a3c;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal h2 {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .modal-option {
+            margin-bottom: 20px;
+        }
+
+        .modal-option label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #d7dadc;
+        }
+
+        .modal-option select,
+        .modal-option input[type="number"],
+        .modal-option input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #121213;
+            border: 2px solid #3a3a3c;
+            color: #ffffff;
+            border-radius: 4px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+
+        .stats {
+            text-align: center;
+            color: #d7dadc;
+            margin-top: 10px;
+        }
+
+        .history-section {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3a3a3c;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .history-header h2 {
+            font-size: 20px;
+            color: #d7dadc;
+        }
+
+        .history-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .history-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            background-color: #818384;
+        }
+
+        .history-btn:hover {
+            background-color: #9a9b9c;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background-color: #1a1a1b;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #3a3a3c;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .history-player {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .history-details {
+            font-size: 14px;
+            color: #818384;
+        }
+
+        .history-attempts {
+            font-size: 24px;
+            font-weight: bold;
+            color: #538d4e;
+        }
+
+        .no-history {
+            text-align: center;
+            color: #818384;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .history-list::-webkit-scrollbar-track {
+            background: #1a1a1b;
+        }
+
+        .history-list::-webkit-scrollbar-thumb {
+            background: #3a3a3c;
+            border-radius: 4px;
+        }
+
+        .history-list::-webkit-scrollbar-thumb:hover {
+            background: #565758;
+        }
+
+        .new-game-btn {
+            background-color: #818384;
+            margin-top: 10px;
+        }
+
+        .new-game-btn:hover {
+            background-color: #9a9b9c;
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-top: 20px;
+            max-width: 350px;
+        }
+
+        .key {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            background-color: #818384;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .key:hover {
+            background-color: #9a9b9c;
+        }
+
+        .key.backspace {
+            grid-column: span 2;
+            font-size: 16px;
+        }
+
+        .key.enter {
+            grid-column: span 2;
+            font-size: 16px;
+            background-color: #538d4e;
+        }
+
+        .key.enter:hover {
+            background-color: #6aaa64;
+        }
+
+        .key:active {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>GUESS THE NUMBER</h1>
+    </header>
+
+    <div class="game-container">
+        <div class="stats">
+            <div>Tries: <span id="triesCount">0</span> / 10</div>
+        </div>
+
+        <div class="guesses-container" id="guessesContainer"></div>
+
+        <div class="keyboard" id="keyboard"></div>
+
+        <div class="button-container">
+            <button class="new-game-btn" onclick="showSettings()">New Game</button>
+        </div>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <div class="history-section">
+        <div class="history-header">
+            <h2>Game History</h2>
+            <div class="history-buttons">
+                <button class="history-btn" onclick="exportHistory()">Export</button>
+                <button class="history-btn" onclick="document.getElementById('importFile').click()">Import</button>
+                <button class="history-btn" onclick="clearHistory()">Clear</button>
+            </div>
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importHistory(event)">
+        </div>
+        <div class="history-list" id="historyList">
+            <div class="no-history">No games completed yet</div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2>Game Settings</h2>
+            <div class="modal-option">
+                <label for="gameMode">Game Mode:</label>
+                <select id="gameMode">
+                    <option value="wordle">Number Wordle</option>
+                    <option value="codebreaker">Code Breaker</option>
+                </select>
+            </div>
+            <div class="modal-option">
+                <label for="playerName">Player Name:</label>
+                <input type="text" id="playerName" placeholder="Enter your name" value="">
+            </div>
+            <div class="modal-option">
+                <label for="digitCount">Number of Digits (3-6):</label>
+                <input type="number" id="digitCount" min="3" max="6" value="4">
+            </div>
+            <div class="modal-option">
+                <label for="repeatDigits">Allow Repeated Digits:</label>
+                <select id="repeatDigits">
+                    <option value="no">NO</option>
+                    <option value="yes">YES</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="startGame()">Start Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetNumber = '';
+        let guesses = [];
+        let currentGuess = '';
+        let maxTries = 10; // Will be set based on game mode
+        let digitCount = 4;
+        let allowRepeats = false;
+        let gameOver = false;
+        let playerName = '';
+        let gameHistory = [];
+        let gameMode = 'wordle'; // 'wordle' or 'codebreaker'
+
+        function showSettings() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function loadHistory() {
+            const saved = localStorage.getItem('numbleHistory');
+            if (saved) {
+                gameHistory = JSON.parse(saved);
+                renderHistory();
+            }
+        }
+
+        function saveHistory() {
+            localStorage.setItem('numbleHistory', JSON.stringify(gameHistory));
+        }
+
+        function addToHistory(won) {
+            if (won) {
+                const record = {
+                    player: playerName || 'Anonymous',
+                    date: new Date().toLocaleDateString(),
+                    time: new Date().toLocaleTimeString(),
+                    attempts: guesses.length,
+                    digitCount: digitCount,
+                    allowRepeats: allowRepeats,
+                    gameMode: gameMode
+                };
+                gameHistory.unshift(record); // Add to beginning
+                saveHistory();
+                renderHistory();
+            }
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            if (gameHistory.length === 0) {
+                historyList.innerHTML = '<div class="no-history">No games completed yet</div>';
+                return;
+            }
+
+            historyList.innerHTML = '';
+            gameHistory.forEach(record => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                const modeName = record.gameMode === 'codebreaker' ? 'Code Breaker' : 'Number Wordle';
+                const modeLabel = record.gameMode ? ` • ${modeName}` : '';
+                item.innerHTML = `
+                    <div class="history-item-info">
+                        <div class="history-player">${record.player}</div>
+                        <div class="history-details">
+                            ${record.date} ${record.time} • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''}${modeLabel}
+                        </div>
+                    </div>
+                    <div class="history-attempts">${record.attempts}/10</div>
+                `;
+                historyList.appendChild(item);
+            });
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all game history?')) {
+                gameHistory = [];
+                saveHistory();
+                renderHistory();
+            }
+        }
+
+        function exportHistory() {
+            if (gameHistory.length === 0) {
+                alert('No history to export!');
+                return;
+            }
+
+            const dataStr = JSON.stringify(gameHistory, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `numble-history-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importHistory(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) {
+                        alert('Invalid history file format!');
+                        return;
+                    }
+
+                    // Merge with existing history, avoiding duplicates based on timestamp
+                    const existingTimestamps = new Set(
+                        gameHistory.map(r => `${r.date}-${r.time}-${r.player}-${r.attempts}`)
+                    );
+                    
+                    imported.forEach(record => {
+                        const timestamp = `${record.date}-${record.time}-${record.player}-${record.attempts}`;
+                        if (!existingTimestamps.has(timestamp)) {
+                            gameHistory.push(record);
+                        }
+                    });
+
+                    // Sort by date (newest first)
+                    gameHistory.sort((a, b) => {
+                        const dateA = new Date(a.date + ' ' + a.time);
+                        const dateB = new Date(b.date + ' ' + b.time);
+                        return dateB - dateA;
+                    });
+
+                    saveHistory();
+                    renderHistory();
+                    alert(`Successfully imported ${imported.length} records!`);
+                } catch (error) {
+                    alert('Error reading file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
+        }
+
+        function generateNumber() {
+            if (allowRepeats) {
+                targetNumber = '';
+                for (let i = 0; i < digitCount; i++) {
+                    targetNumber += Math.floor(Math.random() * 10);
+                }
+            } else {
+                const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+                targetNumber = '';
+                for (let i = 0; i < digitCount; i++) {
+                    const idx = Math.floor(Math.random() * digits.length);
+                    targetNumber += digits[idx];
+                    digits.splice(idx, 1);
+                }
+            }
+            console.log('Target number generated (for testing):', targetNumber);
+        }
+
+        function startGame() {
+            const nameInput = document.getElementById('playerName').value.trim();
+            playerName = nameInput || 'Anonymous';
+            
+            gameMode = document.getElementById('gameMode').value;
+            digitCount = parseInt(document.getElementById('digitCount').value);
+            allowRepeats = document.getElementById('repeatDigits').value === 'yes';
+            
+            if (digitCount < 3 || digitCount > 6) {
+                alert('Please enter a number between 3 and 6');
+                return;
+            }
+
+            document.getElementById('settingsModal').style.display = 'none';
+            
+            guesses = [];
+            currentGuess = '';
+            gameOver = false;
+            generateNumber();
+            
+            // Clear the board container for fresh start
+            document.getElementById('guessesContainer').innerHTML = '';
+            
+            renderBoard();
+            renderKeyboard();
+            updateStats();
+            document.getElementById('message').textContent = '';
+        }
+
+        function renderBoard() {
+            const container = document.getElementById('guessesContainer');
+            
+            // Only render if container is empty (first time) or we need to update current row
+            if (container.children.length === 0) {
+                // Create two columns for desktop, one for mobile
+                const column1 = document.createElement('div');
+                column1.className = 'guesses-column';
+                column1.id = 'column-1';
+                
+                const column2 = document.createElement('div');
+                column2.className = 'guesses-column';
+                column2.id = 'column-2';
+                
+                // Initial render - 5 rows in each column
+                for (let i = 0; i < maxTries; i++) {
+                    const row = document.createElement('div');
+                    row.className = 'guess-row';
+                    row.id = `row-${i}`;
+                    
+                    const boxContainer = document.createElement('div');
+                    boxContainer.style.display = 'flex';
+                    boxContainer.style.gap = '5px';
+                    
+                    for (let j = 0; j < digitCount; j++) {
+                        const box = document.createElement('div');
+                        box.className = 'digit-box';
+                        box.id = `box-${i}-${j}`;
+                        boxContainer.appendChild(box);
+                    }
+                    
+                    row.appendChild(boxContainer);
+                    
+                    // Add feedback div for Code Breaker mode
+                    if (gameMode === 'codebreaker') {
+                        const feedback = document.createElement('div');
+                        feedback.className = 'feedback';
+                        feedback.id = `feedback-${i}`;
+                        row.appendChild(feedback);
+                    }
+                    
+                    // Add first 5 rows to column 1, rest to column 2
+                    if (i < 5) {
+                        column1.appendChild(row);
+                    } else {
+                        column2.appendChild(row);
+                    }
+                }
+                
+                container.appendChild(column1);
+                container.appendChild(column2);
+            }
+
+            // Update submitted guesses
+            for (let i = 0; i < guesses.length; i++) {
+                for (let j = 0; j < digitCount; j++) {
+                    const box = document.getElementById(`box-${i}-${j}`);
+                    if (box && !box.classList.contains('submitted')) {
+                        box.textContent = guesses[i].guess[j];
+                        box.classList.add('filled', 'submitted');
+                        
+                        if (gameMode === 'wordle') {
+                            // Number Wordle: Show individual digit feedback
+                            if (guesses[i].result[j] === 'correct') {
+                                box.classList.add('correct', 'flip');
+                            } else if (guesses[i].result[j] === 'present') {
+                                box.classList.add('present', 'flip');
+                            }
+                        } else {
+                            // Code Breaker: Just show the number, no colors
+                            box.classList.add('codebreaker-filled');
+                        }
+                    }
+                }
+                
+                // Update feedback for Code Breaker mode
+                if (gameMode === 'codebreaker') {
+                    const feedbackDiv = document.getElementById(`feedback-${i}`);
+                    if (feedbackDiv && !feedbackDiv.hasChildNodes()) {
+                        const correctCount = guesses[i].result.filter(r => r === 'correct').length;
+                        const presentCount = guesses[i].result.filter(r => r === 'present').length;
+                        
+                        feedbackDiv.innerHTML = `
+                            <span class="feedback-correct">✓ ${correctCount}</span>
+                            <span class="feedback-present">◐ ${presentCount}</span>
+                        `;
+                    }
+                }
+            }
+
+            // Update current guess row
+            const currentRowIndex = guesses.length;
+            if (currentRowIndex < maxTries) {
+                for (let j = 0; j < digitCount; j++) {
+                    const box = document.getElementById(`box-${currentRowIndex}-${j}`);
+                    if (box) {
+                        box.className = 'digit-box'; // Reset classes
+                        
+                        if (currentGuess[j]) {
+                            box.textContent = currentGuess[j];
+                            box.classList.add('filled');
+                        } else {
+                            box.textContent = '';
+                            if (j === currentGuess.length) {
+                                box.classList.add('active');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function checkGuess(guess) {
+            const result = [];
+            const targetDigits = targetNumber.split('');
+            const guessDigits = guess.split('');
+            const used = new Array(digitCount).fill(false);
+
+            // First pass: mark correct positions
+            for (let i = 0; i < digitCount; i++) {
+                if (guessDigits[i] === targetDigits[i]) {
+                    result[i] = 'correct';
+                    used[i] = true;
+                }
+            }
+
+            // Second pass: mark present digits
+            for (let i = 0; i < digitCount; i++) {
+                if (result[i] !== 'correct') {
+                    let found = false;
+                    for (let j = 0; j < digitCount; j++) {
+                        if (!used[j] && guessDigits[i] === targetDigits[j] && i !== j) {
+                            result[i] = 'present';
+                            used[j] = true;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        result[i] = 'absent';
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        function submitGuess() {
+            if (gameOver) return;
+
+            const guess = currentGuess;
+
+            if (guess.length !== digitCount) {
+                document.getElementById('message').textContent = `Please enter exactly ${digitCount} digits`;
+                return;
+            }
+
+            if (!allowRepeats) {
+                const uniqueDigits = new Set(guess.split(''));
+                if (uniqueDigits.size !== guess.length) {
+                    document.getElementById('message').textContent = 'Repeated digits not allowed in this game';
+                    return;
+                }
+            }
+
+            const result = checkGuess(guess);
+            guesses.push({ guess, result });
+            currentGuess = '';
+            
+            renderBoard();
+            updateStats();
+
+            if (guess === targetNumber) {
+                gameOver = true;
+                document.getElementById('message').textContent = '🎉 Congratulations! You won!';
+                addToHistory(true);
+            } else if (guesses.length >= maxTries) {
+                gameOver = true;
+                document.getElementById('message').textContent = `Game Over! The number was ${targetNumber}`;
+            } else {
+                document.getElementById('message').textContent = '';
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('triesCount').textContent = guesses.length;
+        }
+
+        function renderKeyboard() {
+            const keyboard = document.getElementById('keyboard');
+            keyboard.innerHTML = '';
+
+            // Number keys 0-9
+            for (let i = 0; i <= 9; i++) {
+                const key = document.createElement('button');
+                key.className = 'key';
+                key.textContent = i;
+                key.onclick = () => handleKeyPress(i.toString());
+                keyboard.appendChild(key);
+            }
+
+            // Backspace key
+            const backspace = document.createElement('button');
+            backspace.className = 'key backspace';
+            backspace.textContent = 'DELETE';
+            backspace.onclick = () => handleBackspace();
+            keyboard.appendChild(backspace);
+
+            // Enter key
+            const enter = document.createElement('button');
+            enter.className = 'key enter';
+            enter.textContent = 'ENTER';
+            enter.onclick = () => submitGuess();
+            keyboard.appendChild(enter);
+        }
+
+        function handleKeyPress(digit) {
+            if (gameOver || currentGuess.length >= digitCount) return;
+            
+            currentGuess += digit;
+            renderBoard();
+        }
+
+        function handleBackspace() {
+            if (gameOver || currentGuess.length === 0) return;
+            
+            currentGuess = currentGuess.slice(0, -1);
+            renderBoard();
+        }
+
+        // Physical keyboard support
+        document.addEventListener('keydown', function(e) {
+            if (gameOver) return;
+
+            if (e.key >= '0' && e.key <= '9') {
+                handleKeyPress(e.key);
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                handleBackspace();
+            } else if (e.key === 'Enter') {
+                submitGuess();
+            }
+        });
+
+        // Show settings on load
+        window.onload = function() {
+            loadHistory();
+            showSettings();
+        };
+    </script>
+</body>
+</html>
