@@ -816,6 +816,13 @@
             updateStats();
 
             if (guess === targetNumber) {
+                if (gameMode === "codebreaker"){
+                    for (let j = 0; j < digitCount; j++) {
+                            const box = document.getElementById(`box-${guesses.length-1}-${j}`);
+                            box.classList.remove('codebreaker-filled')
+                            box.classList.add('correct', 'flip');                            
+                        }
+                }
                 gameOver = true;
                 document.getElementById('message').textContent = '🎉 Congratulations! You won!';
                 addToHistory(true);
