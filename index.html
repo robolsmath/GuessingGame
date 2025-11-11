@@ -409,7 +409,7 @@
 
     <div class="game-container">
         <div class="stats">
-            <div>Tries: <span id="triesCount">0</span> / 10</div>
+            <div>Tries: <span id="triesCount">0</span> / 12</div>
         </div>
 
         <div class="guesses-container" id="guessesContainer"></div>
@@ -473,7 +473,7 @@
         let targetNumber = '';
         let guesses = [];
         let currentGuess = '';
-        let maxTries = 10; // Will be set based on game mode
+        let maxTries = 12; // Will be set based on game mode
         let digitCount = 4;
         let allowRepeats = false;
         let gameOver = false;
@@ -699,7 +699,7 @@
                     }
                     
                     // Add first 5 rows to column 1, rest to column 2
-                    if (i < 5) {
+                    if (i < 6) {
                         column1.appendChild(row);
                     } else {
                         column2.appendChild(row);
