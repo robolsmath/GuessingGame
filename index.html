@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Guessing Game</title>
+    <title>Robols | Games</title>
     <style>
         * {
             margin: 0;
@@ -360,10 +360,10 @@
 
         .keyboard {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(7, 1fr);
             gap: 6px;
             margin-top: 20px;
-            max-width: 350px;
+            max-width: 450px;
         }
 
         .key {
@@ -401,6 +401,7 @@
             opacity: 0.5;
         }
     </style>
+    
 </head>
 <body>
     <header>
@@ -408,30 +409,27 @@
     </header>
 
     <div class="game-container">
+        <div class="message" id="message"></div>
+
         <div class="stats">
-            <div>Tries: <span id="triesCount">0</span> / 12</div>
+            <div>Tries: <span id="triesCount">0</span> / <span id="maxTriesDisplay">10</span></div>
+            <div class="mode-label" id="modeLabel">Number Wordle</div>
         </div>
 
         <div class="guesses-container" id="guessesContainer"></div>
-
+        
         <div class="keyboard" id="keyboard"></div>
 
         <div class="button-container">
             <button class="new-game-btn" onclick="showSettings()">New Game</button>
         </div>
 
-        <div class="message" id="message"></div>
+        
     </div>
 
     <div class="history-section">
         <div class="history-header">
-            <h2>Game History</h2>
-            <div class="history-buttons">
-                <button class="history-btn" onclick="exportHistory()">Export</button>
-                <button class="history-btn" onclick="document.getElementById('importFile').click()">Import</button>
-                <button class="history-btn" onclick="clearHistory()">Clear</button>
-            </div>
-            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importHistory(event)">
+            <h2>Latest Solvers</h2>
         </div>
         <div class="history-list" id="historyList">
             <div class="no-history">No games completed yet</div>
@@ -473,28 +471,66 @@
         let targetNumber = '';
         let guesses = [];
         let currentGuess = '';
-        let maxTries = 12; // Will be set based on game mode
+        let maxTries = 10; // Same for both modes now
         let digitCount = 4;
         let allowRepeats = false;
         let gameOver = false;
         let playerName = '';
         let gameHistory = [];
         let gameMode = 'wordle'; // 'wordle' or 'codebreaker'
+        const api_url = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec'
 
         function showSettings() {
             document.getElementById('settingsModal').style.display = 'flex';
         }
 
         function loadHistory() {
-            const saved = localStorage.getItem('numbleHistory');
-            if (saved) {
-                gameHistory = JSON.parse(saved);
-                renderHistory();
-            }
+            // Try to fetch from local JSON file
+
+            fetch(api_url)
+                .then(response => {
+                    if (response.ok) {
+                    return response.json();
+                    }
+
+                    // If fetch succeeds but no JSON, fallback to localStorage
+                    const saved = localStorage.getItem('numbleHistory');
+                    return saved ? JSON.parse(saved) : [];
+                })
+                .then(data => {
+                    gameHistory = data;
+                    console.log(data)
+                    renderHistory();
+                })
+                .catch(error => {
+                    // If fetch fails (offline, network error, CORS), fallback
+                    const saved = localStorage.getItem('numbleHistory');
+                    if (saved) {
+                    gameHistory = JSON.parse(saved);
+                    renderHistory();
+                    } else {
+                    gameHistory = []; // nothing stored
+                    renderHistory();
+                    }
+                });
         }
 
         function saveHistory() {
             localStorage.setItem('numbleHistory', JSON.stringify(gameHistory));
+            fetch(api_url,{
+                      method: 'POST',
+                      body: JSON.stringify({name: playerName || 'Anonymous',
+                      date: new Date().toLocaleDateString(),
+                        time: new Date().toLocaleTimeString(),
+                        attempts: guesses.length,
+                        digitCount: digitCount,
+                        allowRepeats: allowRepeats,
+                        gameMode: gameMode
+                      })
+                })
+                .then(r => r.json())
+                .then(console.log)
+                .catch(console.error);
         }
 
         function addToHistory(won) {
@@ -549,67 +585,6 @@
             }
         }
 
-        function exportHistory() {
-            if (gameHistory.length === 0) {
-                alert('No history to export!');
-                return;
-            }
-
-            const dataStr = JSON.stringify(gameHistory, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `numble-history-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function importHistory(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (!Array.isArray(imported)) {
-                        alert('Invalid history file format!');
-                        return;
-                    }
-
-                    // Merge with existing history, avoiding duplicates based on timestamp
-                    const existingTimestamps = new Set(
-                        gameHistory.map(r => `${r.date}-${r.time}-${r.player}-${r.attempts}`)
-                    );
-                    
-                    imported.forEach(record => {
-                        const timestamp = `${record.date}-${record.time}-${record.player}-${record.attempts}`;
-                        if (!existingTimestamps.has(timestamp)) {
-                            gameHistory.push(record);
-                        }
-                    });
-
-                    // Sort by date (newest first)
-                    gameHistory.sort((a, b) => {
-                        const dateA = new Date(a.date + ' ' + a.time);
-                        const dateB = new Date(b.date + ' ' + b.time);
-                        return dateB - dateA;
-                    });
-
-                    saveHistory();
-                    renderHistory();
-                    alert(`Successfully imported ${imported.length} records!`);
-                } catch (error) {
-                    alert('Error reading file: ' + error.message);
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = ''; // Reset file input
-        }
-
         function generateNumber() {
             if (allowRepeats) {
                 targetNumber = '';
@@ -636,11 +611,13 @@
             digitCount = parseInt(document.getElementById('digitCount').value);
             allowRepeats = document.getElementById('repeatDigits').value === 'yes';
             
-            if (digitCount < 3 || digitCount > 6) {
+            if (digitCount < 3 || digitCount > 6 || String(digitCount) === "NaN") {
                 alert('Please enter a number between 3 and 6');
                 return;
             }
-
+            
+            maxTries = (gameMode === "wordle") ? 10 : 12;
+            
             document.getElementById('settingsModal').style.display = 'none';
             
             guesses = [];
@@ -655,6 +632,11 @@
             renderKeyboard();
             updateStats();
             document.getElementById('message').textContent = '';
+            
+            // Update mode label
+            const modeName = gameMode === 'codebreaker' ? 'Code Breaker' : 'Number Wordle';
+            document.getElementById('modeLabel').textContent = modeName;
+            document.getElementById('maxTriesDisplay').textContent = maxTries;
         }
 
         function renderBoard() {
@@ -671,7 +653,10 @@
                 column2.className = 'guesses-column';
                 column2.id = 'column-2';
                 
-                // Initial render - 5 rows in each column
+                // Determine rows per column based on maxTries
+                const rowsPerColumn = Math.ceil(maxTries / 2);
+                
+                // Initial render
                 for (let i = 0; i < maxTries; i++) {
                     const row = document.createElement('div');
                     row.className = 'guess-row';
@@ -696,10 +681,11 @@
                         feedback.className = 'feedback';
                         feedback.id = `feedback-${i}`;
                         row.appendChild(feedback);
+                        document.body.style.zoom = 0.8;
                     }
                     
-                    // Add first 5 rows to column 1, rest to column 2
-                    if (i < 6) {
+                    // Distribute rows between columns
+                    if (i < rowsPerColumn) {
                         column1.appendChild(row);
                     } else {
                         column2.appendChild(row);
@@ -856,14 +842,17 @@
                 key.textContent = i;
                 key.onclick = () => handleKeyPress(i.toString());
                 keyboard.appendChild(key);
-            }
 
-            // Backspace key
-            const backspace = document.createElement('button');
-            backspace.className = 'key backspace';
-            backspace.textContent = 'DELETE';
-            backspace.onclick = () => handleBackspace();
-            keyboard.appendChild(backspace);
+                if (i === 4){
+                    // Backspace key
+                    const backspace = document.createElement('button');
+                    backspace.className = 'key backspace';
+                    backspace.textContent = 'DELETE';
+                    backspace.onclick = () => handleBackspace();
+                    keyboard.appendChild(backspace);
+                }
+
+            }
 
             // Enter key
             const enter = document.createElement('button');
@@ -894,7 +883,7 @@
             if (e.key >= '0' && e.key <= '9') {
                 handleKeyPress(e.key);
             } else if (e.key === 'Backspace') {
-                e.preventDefault();
+                // e.preventDefault();
                 handleBackspace();
             } else if (e.key === 'Enter') {
                 submitGuess();
@@ -903,8 +892,29 @@
 
         // Show settings on load
         window.onload = function() {
+            document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("maxTriesDisplay").textContent = maxTries;
+            });
+
+            // Allow backspace/delete in modal inputs
+            document.getElementById('playerName').addEventListener('keydown', function(e) {
+                // Allow backspace and delete keys
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    // Default behavior handles this
+                    return;
+                }
+                // Allow Enter to start game
+                if (e.key === 'Enter') {
+                    startGame();
+                }
+            });
+
             loadHistory();
             showSettings();
+
+            
+            
+            
         };
     </script>
 </body>
