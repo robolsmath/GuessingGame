@@ -436,7 +436,7 @@
             background: #3a3a3c;
             border-radius: 3px;
             outline: none;
-            -webkit-appearance: none;
+            /* -webkit-appearance: none; */
         }
 
         .zoom-slider::-webkit-slider-thumb {
@@ -548,7 +548,29 @@
         let playerName = '';
         let gameHistory = [];
         let gameMode = 'wordle'; // 'wordle' or 'codebreaker'
+        let gameStartTime = null;
+        let gameEndTime = null;
+        let gameScore = 0.0;
+        let timeElapsed = 0.0;
         const api_url = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec'
+
+        function getScore(T, time, dgts, rpts) {
+            // Prevent negative or zero times
+            if (time < 0) time = 0;
+            const w1 = 1
+            const w2 = 1.5
+            const timeMin = 120
+            const numerator = w1 + w2 * Math.log(1 + timeMin);
+            const denominator = w1 * T + w2 * Math.log(1 + time);
+            const score = 100*dgts/6 * (numerator / denominator);
+
+            if (!rpts){
+                score = score/1.2
+            }
+            console.log('score is ' + String(score))
+
+            return score;
+            }
 
         function showSettings() {
             // Check if game is in progress
@@ -576,7 +598,6 @@
                 })
                 .then(data => {
                     gameHistory = data;
-                    console.log(data)
                     renderHistory();
                 })
                 .catch(error => {
@@ -602,7 +623,10 @@
                         attempts: guesses.length,
                         digitCount: digitCount,
                         allowRepeats: allowRepeats,
-                        gameMode: gameMode
+                        gameMode: gameMode,
+                        maxTries: maxTries,
+                        timeElapsed: timeElapsed,
+                        gameScore: gameScore
                       })
                 })
                 .then(r => r.json())
@@ -619,7 +643,10 @@
                     attempts: guesses.length,
                     digitCount: digitCount,
                     allowRepeats: allowRepeats,
-                    gameMode: gameMode
+                    gameMode: gameMode,
+                    maxTries: maxTries,
+                    timeElapsed: timeElapsed,
+                    gameScore: gameScore
                 };
                 gameHistory.unshift(record); // Add to beginning
                 saveHistory();
@@ -637,18 +664,22 @@
 
             historyList.innerHTML = '';
             gameHistory.forEach(record => {
+                const minutes = Math.floor(record.timeElapsed / 60);
+                const seconds = record.timeElapsed % 60;
+                const timeDisplay = record.timeElapsed ? ` • ${minutes}m ${seconds}s` : '';
+
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 const modeName = record.gameMode === 'codebreaker' ? 'Code Breaker' : 'Number Wordle';
                 const modeLabel = record.gameMode ? ` • ${modeName}` : '';
                 item.innerHTML = `
                     <div class="history-item-info">
-                        <div class="history-player">${record.player}</div>
+                        <div class="history-player">${record.player} [Score: ${Math.round(record.gameScore*10)/10}]</div>
                         <div class="history-details">
-                            ${record.date} ${record.time} • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''}${modeLabel}
+                            ${record.date} ${record.time} • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''}${modeLabel}${timeDisplay}
                         </div>
                     </div>
-                    <div class="history-attempts">${record.attempts}/10</div>
+                    <div class="history-attempts">${record.attempts}/${record.maxTries}</div>
                 `;
                 historyList.appendChild(item);
             });
@@ -714,6 +745,8 @@
             const modeName = gameMode === 'codebreaker' ? 'Code Breaker' : 'Number Wordle';
             document.getElementById('modeLabel').textContent = modeName;
             document.getElementById('maxTriesDisplay').textContent = maxTries;
+
+            gameStartTime = new Date();
         }
 
         function renderBoard() {
@@ -909,6 +942,10 @@
                         }
                 }
                 gameOver = true;
+                gameEndTime = new Date();
+                timeElapsed = Math.floor((gameEndTime - gameStartTime) / 1000); // in seconds
+                gameScore = getScore(guesses.length, timeElapsed, digitCount, allowRepeats)
+                
                 document.getElementById('message').textContent = '🎉 Congratulations! You won!';
                 addToHistory(true);
             } else if (guesses.length >= maxTries) {
