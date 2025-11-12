@@ -75,19 +75,6 @@
             position: relative;
         }
 
-        @media (max-width: 768px) {
-            .feedback-left {
-                margin-right: 0;
-                margin-left: 15px;
-                align-items: flex-start;
-                order: 2;
-            }
-            
-            .guess-row {
-                flex-wrap: wrap;
-            }
-        }
-
         .feedback {
             margin-left: 15px;
             display: flex;
@@ -424,6 +411,59 @@
         .key:active {
             opacity: 0.5;
         }
+
+        * {
+        touch-action: manipulation;
+        }
+
+        .zoom-control {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 350px;
+        }
+
+        .zoom-control label {
+            color: #d7dadc;
+            font-size: 14px;
+            min-width: 60px;
+        }
+
+        .zoom-slider {
+            flex: 1;
+            height: 6px;
+            background: #3a3a3c;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #538d4e;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .zoom-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #538d4e;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .zoom-value {
+            color: #d7dadc;
+            font-size: 14px;
+            min-width: 40px;
+        }
+
     </style>
     
 </head>
@@ -443,6 +483,12 @@
         <div class="guesses-container" id="guessesContainer"></div>
         
         <div class="keyboard" id="keyboard"></div>
+
+        <div class="zoom-control">
+            <label for="zoomSlider">Zoom:</label>
+            <input type="range" id="zoomSlider" class="zoom-slider" min="50" max="150" value="100" step="5">
+            <span class="zoom-value" id="zoomValue">100%</span>
+        </div>
 
         <div class="button-container">
             <button class="new-game-btn" onclick="showSettings()">New Game</button>
@@ -466,8 +512,8 @@
             <div class="modal-option">
                 <label for="gameMode">Game Mode:</label>
                 <select id="gameMode">
-                    <option value="wordle">Number Wordle</option>
                     <option value="codebreaker">Code Breaker</option>
+                    <option value="wordle">Number Wordle</option>
                 </select>
             </div>
             <div class="modal-option">
@@ -481,8 +527,8 @@
             <div class="modal-option">
                 <label for="repeatDigits">Allow Repeated Digits:</label>
                 <select id="repeatDigits">
-                    <option value="no">NO</option>
                     <option value="yes">YES</option>
+                    <option value="no">NO</option>
                 </select>
             </div>
             <div class="modal-buttons">
@@ -957,6 +1003,25 @@
 
             loadHistory();
             showSettings();
+
+            // Zoom control
+            const zoomSlider = document.getElementById('zoomSlider');
+            const zoomValue = document.getElementById('zoomValue');
+            const gameContainer = document.querySelector('.game-container');
+            const historySection = document.querySelector('.history-section');
+
+            zoomSlider.addEventListener('input', function() {
+                const zoom = this.value / 100;
+                zoomValue.textContent = this.value + '%';
+                gameContainer.style.transform = `scale(${zoom})`;
+                gameContainer.style.transformOrigin = 'top center';
+                
+                // Adjust history section position based on zoom
+                const containerHeight = gameContainer.offsetHeight;
+                const scaledHeight = containerHeight * zoom;
+                const marginTop = scaledHeight - containerHeight + 30; // 30px extra spacing
+                historySection.style.marginTop = marginTop + 'px';
+            });
 
             
             
