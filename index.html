@@ -66,13 +66,26 @@
                 gap: 5px;
             }
         }
-
+        
         .guess-row {
             display: flex;
             gap: 5px;
             justify-content: center;
             align-items: center;
             position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .feedback-left {
+                margin-right: 0;
+                margin-left: 15px;
+                align-items: flex-start;
+                order: 2;
+            }
+            
+            .guess-row {
+                flex-wrap: wrap;
+            }
         }
 
         .feedback {
