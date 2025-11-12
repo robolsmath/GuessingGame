@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Robols | Games</title>
     <style>
         * {
@@ -83,6 +83,16 @@
             font-size: 14px;
             font-weight: bold;
             min-width: 80px;
+        }
+
+        .feedback-left {
+            margin-right: 15px;
+            align-items: flex-end;
+        }
+
+        .feedback-right {
+            margin-left: 15px;
+            align-items: flex-start;
         }
 
         .feedback-correct {
@@ -238,6 +248,7 @@
 
         .modal-buttons button {
             flex: 1;
+            background-color: #538d4e;
         }
 
         .stats {
@@ -481,6 +492,13 @@
         const api_url = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec'
 
         function showSettings() {
+            // Check if game is in progress
+            if (!gameOver && guesses.length > 0) {
+                if (!confirm('A game is currently in progress. Start a new game?')) {
+                    document.getElementById('settingsModal').style.display = 'none';
+                    return;
+                }
+            }
             document.getElementById('settingsModal').style.display = 'flex';
         }
 
@@ -662,6 +680,14 @@
                     row.className = 'guess-row';
                     row.id = `row-${i}`;
                     
+                    // Add feedback on left for first column (Code Breaker mode)
+                    if (gameMode === 'codebreaker' && i < rowsPerColumn) {
+                        const feedbackLeft = document.createElement('div');
+                        feedbackLeft.className = 'feedback feedback-left';
+                        feedbackLeft.id = `feedback-${i}`;
+                        row.appendChild(feedbackLeft);
+                    }
+
                     const boxContainer = document.createElement('div');
                     boxContainer.style.display = 'flex';
                     boxContainer.style.gap = '5px';
