@@ -30,12 +30,22 @@
             margin-bottom: 30px;
         }
 
+        .version-text {
+            position: absolute;
+            right: 20px;
+            bottom: -20px;
+            font-size: 15px;
+            color: #565758;
+        }
+
         h1 {
             text-align: center;
             font-size: 36px;
             font-weight: 700;
             letter-spacing: 0.2rem;
         }
+
+        
 
         .game-container {
             display: flex;
@@ -695,6 +705,7 @@
     <header>
         <h1>GUESS THE NUMBER</h1>
         <div class="help-icon" onclick="showHelp()">?</div>
+        <div class="version-text" id="versionText"></div>
     </header>
 
     <div class="game-container">
@@ -784,6 +795,7 @@
         const api_url_latest = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getLatest10"'
         const api_url_top_wordle = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getTopWordle'
         const api_url_top_codebreaker = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getTopCodeBreaker'
+        const gameVersion = 'v1.0.3';
 
         function getScore(T, time, dgts, rpts) {
             // Prevent negative or zero times
@@ -911,6 +923,7 @@
                 };
                 gameHistory.unshift(record); // Add to beginning
 
+
                 // Check if this record should be added to topWordle
                 if (record.gameMode === 'wordle') {
                     // Check if topWordle has less than 10 records OR if this score beats the lowest score
@@ -930,15 +943,16 @@
                         }
                     }
                 }
+
                 if (record.gameMode === 'codebreaker') {
                     // Check if topCodebreaker has less than 10 records OR if this score beats the lowest score
                     const shouldAddToTop_codebreaker = topCodeBreaker.length < 10 || 
                                             record.gameScore > topCodeBreaker[topCodeBreaker.length - 1].gameScore;
-                    
+
                     if (shouldAddToTop_codebreaker) {
                         // Add the new record
                         topCodeBreaker.push(record);
-                        
+                                                
                         // Sort by gameScore descending (highest first)
                         topCodeBreaker.sort((a, b) => b.gameScore - a.gameScore);
                         
@@ -1332,7 +1346,7 @@
                 .slice(0, 10);
             
             title.textContent = mode === 'wordle' ? 'Top 10 Wordlers' : 'Top 10 CodeBreakers';
-            
+
             if (filtered.length === 0) {
                 list.innerHTML = '<div class="no-history">No completed games yet</div>';
             } else {
@@ -1375,6 +1389,9 @@
         
         // Show settings on load
         window.onload = function() {
+            // Display version
+            document.getElementById('versionText').textContent = gameVersion;
+
             document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("maxTriesDisplay").textContent = maxTries;
             });
@@ -1419,13 +1436,13 @@
                 if (e.key === 'Escape') {
                     // Close settings modal if open and game is in progress
                     const settingsModal = document.getElementById('settingsModal');
-                    if (settingsModal.style.display === 'flex' && !gameOver && guesses.length > 0) {
+                    if (settingsModal.style.display === 'flex' && guesses.length > 0) {
                         settingsModal.style.display = 'none';
                     }
                     
                     // Close leaderboard modal if open and game is in progress
                     const leaderboardModal = document.getElementById('leaderboardModal');
-                    if (leaderboardModal.style.display === 'flex' && !gameOver && guesses.length > 0) {
+                    if (leaderboardModal.style.display === 'flex') {
                         leaderboardModal.style.display = 'none';
                     }
 
