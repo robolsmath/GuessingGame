@@ -935,16 +935,16 @@
                     const shouldAddToTop_codebreaker = topCodeBreaker.length < 10 || 
                                             record.gameScore > topCodeBreaker[topCodeBreaker.length - 1].gameScore;
                     
-                    if (shouldAddToTop) {
+                    if (shouldAddToTop_codebreaker) {
                         // Add the new record
-                        topCodebreaker.push(record);
+                        topCodeBreaker.push(record);
                         
                         // Sort by gameScore descending (highest first)
-                        topCodebreaker.sort((a, b) => b.gameScore - a.gameScore);
+                        topCodeBreaker.sort((a, b) => b.gameScore - a.gameScore);
                         
                         // Keep only top 10
-                        if (topCodebreaker.length > 10) {
-                            topCodebreaker = topCodebreaker.slice(0, 10);
+                        if (topCodeBreaker.length > 10) {
+                            topCodeBreaker = topCodeBreaker.slice(0, 10);
                         }
                     }
                 }
