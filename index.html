@@ -157,9 +157,14 @@
         }
 
         .button-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
             margin-top: 20px;
+            /* max-width: 450px; */
+            /* margin-top: 20px;
             display: flex;
-            justify-content: center;
+            justify-content: center; */
         }
 
         button {
@@ -366,7 +371,7 @@
         }
 
         .new-game-btn:hover {
-            background-color: #9a9b9c;
+            background-color: #538d4e;
         }
 
         .keyboard {
@@ -396,6 +401,7 @@
         .key.backspace {
             grid-column: span 2;
             font-size: 16px;
+            background-color: #8D4E53;
         }
 
         .key.enter {
@@ -463,6 +469,100 @@
             font-size: 14px;
             min-width: 40px;
         }
+        
+        .leaderboard-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .leaderboard-content {
+            background-color: #121213;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #3a3a3c;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .leaderboard-content h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #d7dadc;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .leaderboard-item {
+            background-color: #1a1a1b;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #3a3a3c;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .leaderboard-rank {
+            font-size: 20px;
+            font-weight: bold;
+            color: #818384;
+            min-width: 40px;
+        }
+
+        .leaderboard-item:nth-child(1) .leaderboard-rank {
+            color: #FFD700;
+        }
+
+        .leaderboard-item:nth-child(2) .leaderboard-rank {
+            color: #C0C0C0;
+        }
+
+        .leaderboard-item:nth-child(3) .leaderboard-rank {
+            color: #CD7F32;
+        }
+
+        .leaderboard-info {
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .leaderboard-player {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .leaderboard-details {
+            font-size: 14px;
+            color: #818384;
+            margin-top: 3px;
+        }
+
+        .leaderboard-score {
+            font-size: 18px;
+            font-weight: bold;
+            color: #538d4e;
+        }
+
+        .close-leaderboard {
+            background-color: #818384;
+            margin-top: 20px;
+            width: 100%;
+        }
 
     </style>
     
@@ -492,6 +592,8 @@
 
         <div class="button-container">
             <button class="new-game-btn" onclick="showSettings()">New Game</button>
+            <button class="new-game-btn" onclick="showLeaderboard('wordle')">Top Wordlers</button>
+            <button class="new-game-btn" onclick="showLeaderboard('codebreaker')">Top CodeBreakers</button>
         </div>
 
         
@@ -547,12 +649,16 @@
         let gameOver = false;
         let playerName = '';
         let gameHistory = [];
-        let gameMode = 'wordle'; // 'wordle' or 'codebreaker'
+        let topWordle = [];
+        let topCodeBreaker = [];
+        let gameMode = 'codebreaker'; // 'wordle' or 'codebreaker'
         let gameStartTime = null;
         let gameEndTime = null;
         let gameScore = 0.0;
         let timeElapsed = 0.0;
-        const api_url = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec'
+        const api_url_latest = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getLatest10"'
+        const api_url_top_wordle = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getTopWordle'
+        const api_url_top_codebreaker = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getTopCodeBreaker'
 
         function getScore(T, time, dgts, rpts) {
             // Prevent negative or zero times
@@ -562,7 +668,7 @@
             const timeMin = 120
             const numerator = w1 + w2 * Math.log(1 + timeMin);
             const denominator = w1 * T + w2 * Math.log(1 + time);
-            const score = 100*dgts/6 * (numerator / denominator);
+            score = 100*dgts/6 * (numerator / denominator);
 
             if (!rpts){
                 score = score/1.2
@@ -584,9 +690,11 @@
         }
 
         function loadHistory() {
-            // Try to fetch from local JSON file
+            // Try to fetch data
 
-            fetch(api_url)
+            
+            // gameHistory
+            fetch(api_url_latest)
                 .then(response => {
                     if (response.ok) {
                     return response.json();
@@ -611,11 +719,39 @@
                     renderHistory();
                     }
                 });
+            
+            // topWordle
+            fetch(api_url_top_wordle)
+                .then(response => {
+                    if (response.ok) {
+                    return response.json();
+                    }
+                })
+                .then(data => {
+                    topWordle = data;
+                })
+                .catch(error => {
+                    topWordle = []; // nothing stored
+                });
+            
+            // topCodebreaker
+            fetch(api_url_top_codebreaker)
+                .then(response => {
+                    if (response.ok) {
+                    return response.json();
+                    }
+                })
+                .then(data => {
+                    topCodeBreaker = data;
+                })
+                .catch(error => {
+                    topCodeBreaker = []; // nothing stored
+                });
         }
 
         function saveHistory() {
             localStorage.setItem('numbleHistory', JSON.stringify(gameHistory));
-            fetch(api_url,{
+            fetch(api_url_latest,{
                       method: 'POST',
                       body: JSON.stringify({name: playerName || 'Anonymous',
                       date: new Date().toLocaleDateString(),
@@ -649,6 +785,45 @@
                     gameScore: gameScore
                 };
                 gameHistory.unshift(record); // Add to beginning
+
+                // Check if this record should be added to topWordle
+                if (record.gameMode === 'wordle') {
+                    // Check if topWordle has less than 10 records OR if this score beats the lowest score
+                    const shouldAddToTop = topWordle.length < 10 || 
+                                            record.gameScore > topWordle[topWordle.length - 1].gameScore;
+                    
+                    if (shouldAddToTop) {
+                        // Add the new record
+                        topWordle.push(record);
+                        
+                        // Sort by gameScore descending (highest first)
+                        topWordle.sort((a, b) => b.gameScore - a.gameScore);
+                        
+                        // Keep only top 10
+                        if (topWordle.length > 10) {
+                            topWordle = topWordle.slice(0, 10);
+                        }
+                    }
+                }
+                if (record.gameMode === 'codebreaker') {
+                    // Check if topCodebreaker has less than 10 records OR if this score beats the lowest score
+                    const shouldAddToTop_codebreaker = topCodeBreaker.length < 10 || 
+                                            record.gameScore > topCodeBreaker[topCodeBreaker.length - 1].gameScore;
+                    
+                    if (shouldAddToTop) {
+                        // Add the new record
+                        topCodebreaker.push(record);
+                        
+                        // Sort by gameScore descending (highest first)
+                        topCodebreaker.sort((a, b) => b.gameScore - a.gameScore);
+                        
+                        // Keep only top 10
+                        if (topCodebreaker.length > 10) {
+                            topCodebreaker = topCodebreaker.slice(0, 10);
+                        }
+                    }
+                }
+
                 saveHistory();
                 renderHistory();
             }
@@ -676,7 +851,7 @@
                     <div class="history-item-info">
                         <div class="history-player">${record.player} [Score: ${Math.round(record.gameScore*10)/10}]</div>
                         <div class="history-details">
-                            ${record.date} ${record.time} • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''}${modeLabel}${timeDisplay}
+                            ${record.date}, ${record.time} • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''}${modeLabel}${timeDisplay}
                         </div>
                     </div>
                     <div class="history-attempts">${record.attempts}/${record.maxTries}</div>
@@ -708,7 +883,7 @@
                     digits.splice(idx, 1);
                 }
             }
-            console.log('Target number generated (for testing):', targetNumber);
+            // console.log('Target number generated (for testing):', targetNumber);
         }
 
         function startGame() {
@@ -946,7 +1121,7 @@
                 timeElapsed = Math.floor((gameEndTime - gameStartTime) / 1000); // in seconds
                 gameScore = getScore(guesses.length, timeElapsed, digitCount, allowRepeats)
                 
-                document.getElementById('message').textContent = '🎉 Congratulations! You won!';
+                document.getElementById('message').textContent = `🎉 Congratulations, you won! Game score = ${Math.round(gameScore*10)/10}`;
                 addToHistory(true);
             } else if (guesses.length >= maxTries) {
                 gameOver = true;
@@ -1018,6 +1193,52 @@
                 submitGuess();
             }
         });
+        
+        function showLeaderboard(mode) {
+            const modal = document.getElementById('leaderboardModal');
+            const title = document.getElementById('leaderboardTitle');
+            const list = document.getElementById('leaderboardList');
+            
+            // Filter by game mode and sort by time
+            const top10 = mode === 'wordle' ? topWordle : topCodeBreaker;
+            const filtered = top10
+                .filter(record => record.gameMode === mode && record.gameScore)
+                .sort((a, b) => b.gameScore - a.gameScore)
+                .slice(0, 10);
+            
+            title.textContent = mode === 'wordle' ? 'Top 10 Wordlers' : 'Top 10 CodeBreakers';
+            
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="no-history">No completed games yet</div>';
+            } else {
+                list.innerHTML = '';
+                filtered.forEach((record, index) => {
+                    const minutes = Math.floor(record.timeElapsed / 60);
+                    const seconds = record.timeElapsed % 60;
+                    const timeDisplay = `${minutes}m ${seconds}s`;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    item.innerHTML = `
+                        <div class="leaderboard-rank">#${index + 1}</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-player">${record.player}</div>
+                            <div class="leaderboard-details">
+                                ${record.date}, ${record.time} • ${record.attempts} attempts • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''}• ${timeDisplay}
+                            </div>
+                        </div>
+                        <div class="leaderboard-score">${Math.round(record.gameScore*10)/10}</div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboardModal').style.display = 'none';
+        }
 
         // Show settings on load
         window.onload = function() {
@@ -1060,10 +1281,31 @@
                 historySection.style.marginTop = marginTop + 'px';
             });
 
-            
-            
-            
+            // Escape key handler
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    // Close settings modal if open and game is in progress
+                    const settingsModal = document.getElementById('settingsModal');
+                    if (settingsModal.style.display === 'flex' && !gameOver && guesses.length > 0) {
+                        settingsModal.style.display = 'none';
+                    }
+                    
+                    // Close leaderboard modal if open and game is in progress
+                    const leaderboardModal = document.getElementById('leaderboardModal');
+                    if (leaderboardModal.style.display === 'flex' && !gameOver && guesses.length > 0) {
+                        leaderboardModal.style.display = 'none';
+                    }
+                }
+            });
         };
     </script>
+
+    <div id="leaderboardModal" class="leaderboard-modal">
+        <div class="leaderboard-content">
+            <h2 id="leaderboardTitle">Top 10</h2>
+            <div class="leaderboard-list" id="leaderboardList"></div>
+            <button class="close-leaderboard" onclick="closeLeaderboard()">Close</button>
+        </div>
+    </div>
 </body>
 </html>
