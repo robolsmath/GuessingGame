@@ -564,12 +564,137 @@
             width: 100%;
         }
 
+        .help-icon {
+            position: absolute;
+            right: 0px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border: 2px solid #d7dadc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #d7dadc;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .help-icon:hover {
+            background-color: #d7dadc;
+            color: #121213;
+        }
+
+        header {
+            border-bottom: 1px solid #3a3a3c;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .help-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .help-content {
+            background-color: #121213;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #3a3a3c;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: #d7dadc;
+        }
+
+        .help-content h2 {
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .help-content h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #ffffff;
+            font-size: 18px;
+        }
+
+        .help-content p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .help-example {
+            display: flex;
+            gap: 5px;
+            margin: 15px 0;
+        }
+
+        .help-box {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #3a3a3c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .help-box.correct {
+            background-color: #538d4e;
+            border-color: #538d4e;
+        }
+
+        .help-box.present {
+            background-color: #b59f3b;
+            border-color: #b59f3b;
+        }
+
+        .help-box.absent {
+            background-color: #3a3a3c;
+            border-color: #3a3a3c;
+        }
+
+        .close-help {
+            background-color: #818384;
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .close-help:hover {
+            background-color: #9a9b9c;
+        }
+
     </style>
     
 </head>
 <body>
     <header>
         <h1>GUESS THE NUMBER</h1>
+        <div class="help-icon" onclick="showHelp()">?</div>
     </header>
 
     <div class="game-container">
@@ -840,21 +965,21 @@
             historyList.innerHTML = '';
             gameHistory.forEach(record => {
                 const minutes = Math.floor(record.timeElapsed / 60);
-                const seconds = record.timeElapsed % 60;
+                const seconds = Math.round(record.timeElapsed % 60);
                 const timeDisplay = record.timeElapsed ? ` • ${minutes}m ${seconds}s` : '';
 
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 const modeName = record.gameMode === 'codebreaker' ? 'Code Breaker' : 'Number Wordle';
-                const modeLabel = record.gameMode ? ` • ${modeName}` : '';
+                const modeLabel = record.gameMode ? `${modeName}` : '';
                 item.innerHTML = `
                     <div class="history-item-info">
-                        <div class="history-player">${record.player} [Score: ${Math.round(record.gameScore*10)/10}]</div>
+                        <div class="history-player">${record.player}</div>
                         <div class="history-details">
-                            ${record.date}, ${record.time} • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''}${modeLabel}${timeDisplay}
+                            ${modeLabel} • ${record.time}, ${record.date} • ${record.attempts} attempts • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''} ${timeDisplay}
                         </div>
                     </div>
-                    <div class="history-attempts">${record.attempts}/${record.maxTries}</div>
+                    <div class="history-attempts">${record.gameScore.toFixed(1)}</div>
                 `;
                 historyList.appendChild(item);
             });
@@ -1118,7 +1243,7 @@
                 }
                 gameOver = true;
                 gameEndTime = new Date();
-                timeElapsed = Math.floor((gameEndTime - gameStartTime) / 1000); // in seconds
+                timeElapsed = (gameEndTime - gameStartTime) / 1000; // in seconds
                 gameScore = getScore(guesses.length, timeElapsed, digitCount, allowRepeats)
                 
                 document.getElementById('message').textContent = `🎉 Congratulations, you won! Game score = ${Math.round(gameScore*10)/10}`;
@@ -1214,7 +1339,7 @@
                 list.innerHTML = '';
                 filtered.forEach((record, index) => {
                     const minutes = Math.floor(record.timeElapsed / 60);
-                    const seconds = record.timeElapsed % 60;
+                    const seconds = Math.round(record.timeElapsed % 60);
                     const timeDisplay = `${minutes}m ${seconds}s`;
                     
                     const item = document.createElement('div');
@@ -1224,10 +1349,10 @@
                         <div class="leaderboard-info">
                             <div class="leaderboard-player">${record.player}</div>
                             <div class="leaderboard-details">
-                                ${record.date}, ${record.time} • ${record.attempts} attempts • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''}• ${timeDisplay}
+                                ${record.time}, ${record.date} • ${record.attempts} attempts • ${record.digitCount} digits${record.allowRepeats ? ' (repeats)' : ''} • ${timeDisplay}
                             </div>
                         </div>
-                        <div class="leaderboard-score">${Math.round(record.gameScore*10)/10}</div>
+                        <div class="leaderboard-score">${record.gameScore.toFixed(1)}</div>
                     `;
                     list.appendChild(item);
                 });
@@ -1240,6 +1365,14 @@
             document.getElementById('leaderboardModal').style.display = 'none';
         }
 
+        function showHelp() {
+            document.getElementById('helpModal').style.display = 'flex';
+        }
+
+        function closeHelp() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+        
         // Show settings on load
         window.onload = function() {
             document.addEventListener("DOMContentLoaded", () => {
@@ -1295,6 +1428,12 @@
                     if (leaderboardModal.style.display === 'flex' && !gameOver && guesses.length > 0) {
                         leaderboardModal.style.display = 'none';
                     }
+
+                    // Close help modal if open
+                    const helpModal = document.getElementById('helpModal');
+                    if (helpModal.style.display === 'flex') {
+                        helpModal.style.display = 'none';
+                    }
                 }
             });
         };
@@ -1305,6 +1444,55 @@
             <h2 id="leaderboardTitle">Top 10</h2>
             <div class="leaderboard-list" id="leaderboardList"></div>
             <button class="close-leaderboard" onclick="closeLeaderboard()">Close</button>
+        </div>
+    </div>
+
+    <div id="helpModal" class="help-modal">
+        <div class="help-content">
+            <h2>How To Play</h2>
+            <p>Guess the hidden number in 10 tries or less!</p>
+            
+            <h3>Number Wordle</h3>
+            <p>After each guess, the color of the tiles will change to show how close your guess was to the number.</p>
+            
+            <p><strong>Green</strong> means the digit is in the number and in the correct spot.</p>
+
+            <div class="help-example">
+                <div class="help-box correct">1</div>
+                <div class="help-box">2</div>
+                <div class="help-box">3</div>
+                <div class="help-box">4</div>
+            </div>
+            
+            <p><strong>Yellow</strong> means the digit is in the number but in the wrong spot.</p>
+            <div class="help-example">
+                <div class="help-box">5</div>
+                <div class="help-box present">6</div>
+                <div class="help-box">7</div>
+                <div class="help-box">8</div>
+            </div>
+            
+            <p><strong>Gray</strong> means the digit is not in the number at all.</p>
+            <div class="help-example">
+                <div class="help-box">9</div>
+                <div class="help-box">0</div>
+                <div class="help-box absent">1</div>
+                <div class="help-box">2</div>
+            </div>
+            
+            <h3>Code Breaker</h3>
+            <p>A harder mode! Instead of showing which specific digits are correct, you only see:</p>
+            <p><strong>✓</strong> - Number of digits in the correct position<br>
+            <strong>◐</strong> - Number of correct digits in wrong positions</p>
+            <p>Use logic and deduction to figure out which digits go where!</p>
+
+            <h3>Scoring System</h3>
+            <ul>
+                <li>Fewer tries and faster solving time translate to higher game score.</li>
+                <li>Longer numbers and repeating digits options have higher scoring cap.</li>
+            </ul>
+            
+            <button class="close-help" onclick="closeHelp()">Got It!</button>
         </div>
     </div>
 </body>
