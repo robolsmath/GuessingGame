@@ -796,7 +796,7 @@
         const api_url_latest = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getLatest10"'
         const api_url_top_wordle = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getTopWordle'
         const api_url_top_codebreaker = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getTopCodeBreaker'
-        const gameVersion = 'v1.0.6';
+        const gameVersion = 'v1.0.7';
 
         function getScore(T, time, dgts, rpts) {
             // Prevent negative or zero times
@@ -900,7 +900,8 @@
                         gameMode: gameMode,
                         maxTries: maxTries,
                         timeElapsed: timeElapsed,
-                        gameScore: gameScore
+                        gameScore: gameScore,
+                        allGuesses: allGuesses.join('-')
                       })
                 })
                 .then(r => r.json())
