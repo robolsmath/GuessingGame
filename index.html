@@ -778,6 +778,7 @@
     <script>
         let targetNumber = '';
         let guesses = [];
+        let allGuesses = []; // Stores all guesses from the current game
         let currentGuess = '';
         let maxTries = 10; // Same for both modes now
         let digitCount = 4;
@@ -795,7 +796,7 @@
         const api_url_latest = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getLatest10"'
         const api_url_top_wordle = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getTopWordle'
         const api_url_top_codebreaker = 'https://script.google.com/macros/s/AKfycbw5s7F8s1VWRDg1Ldg4Ayk7HsX_cEvnAaf_4QS8UrG_-4bcemfWIb6yiljNcEPj41bdZQ/exec?action=getTopCodeBreaker'
-        const gameVersion = 'v1.0.3';
+        const gameVersion = 'v1.0.4';
 
         function getScore(T, time, dgts, rpts) {
             // Prevent negative or zero times
@@ -1043,6 +1044,7 @@
             document.getElementById('settingsModal').style.display = 'none';
             
             guesses = [];
+            allGuesses = []; // Reset guesses for new game
             currentGuess = '';
             gameOver = false;
             generateNumber();
@@ -1242,6 +1244,7 @@
 
             const result = checkGuess(guess);
             guesses.push({ guess, result });
+            allGuesses.push(guess); // Store the guess string
             currentGuess = '';
             
             renderBoard();
